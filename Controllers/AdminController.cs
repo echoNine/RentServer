@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Linq;
 using System.Text.RegularExpressions;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Http;
@@ -17,39 +16,41 @@ using RentServer.Setting;
 
 namespace RentServer.Controllers
 {
-    public class UserLoginForm
+    public class AdminLoginForm
     {
         public string Email { get; set; }
         public string Pwd { get; set; }
     }
     
-    public class UserRegisterForm
+    public class AdminRegisterForm
     {
         public string Email { get; set; }
         public string Pwd { get; set; }
         public string Code { get; set; }
-        
+        public string LicenseKey { get; set; }
         public string NowTime { get; set; }
     }
     
-    public class UserSendForm
+    public class AdminSendForm
     {
         public string Email { get; set; }
         public string Pwd { get; set; }
     }
     
-    public class CurrentUser
+    public class CurrentAdmin
     {
         public string Email { get; set; } 
         public string Name { get; set; } 
         public string Sex { get; set; } 
-        public string CardNum { get; set; } 
+        
+        public string CardNum { get; set; }
         public string Phone { get; set; } 
         public string Native { get; set; } 
+        public string Major { get; set; } 
         public string Avatar { get; set; }
     }
     
-    public class UpdateData
+    public class UpdateForm
     {
         public string Email { get; set; } 
         public string Name { get; set; } 
@@ -57,25 +58,26 @@ namespace RentServer.Controllers
         public string Phone { get; set; } 
         public string Native { get; set; } 
         public string Avatar { get; set; }
+        public string Major { get; set; }
         public string[] SelfDescTags { get; set; }
     }
-
+    
     [Route("[controller]")]
     [ApiController]
-    public class UserController : BaseController
+    public class AdminController : BaseController
     {
         private SmtpSettings SmtpSettings { get; set; }
   
-        public UserController(IOptions<SmtpSettings> settings)
+        public AdminController(IOptions<SmtpSettings> settings)
         {
             SmtpSettings = settings.Value;
         }
         
-        // POST login
+        // POST user
         [HttpPost("login")]
-        public JsonResult Login (UserLoginForm loginForm)
+        public JsonResult Login (AdminLoginForm loginForm)
         {
-            string sql = "select * from user where email=@Email and pwd=@Pwd";
+            string sql = "select * from admin where email=@Email and pwd=@Pwd";
             MySqlConnection con = DataOperate.GetCon();
             con.Open();
             MySqlCommand cmd = new MySqlCommand(sql, con);
@@ -91,15 +93,16 @@ namespace RentServer.Controllers
             return Fail("用户或密码输入有误，登录失败..",1006);
         }
 
-        // POST register
+        // POST user
         [HttpPost("register")]
-        public JsonResult Register (UserRegisterForm registerForm)
+        public JsonResult Register (AdminRegisterForm registerForm)
         {
             string MailCode = registerForm.Code;
+            string LicenseKey = registerForm.LicenseKey;
             string str = HttpContext.Session.GetInt32("code").ToString();
-            if (str == MailCode)
+            if (str == MailCode && LicenseKey == "fox072065yat")
             {
-                string sql = "insert into user(email,pwd,createdAt) values(@Email,@Pwd,'" + registerForm.NowTime + "')";
+                string sql = "insert into admin(email,pwd,createdAt) values(@Email,@Pwd,'" + registerForm.NowTime + "')";
                 MySqlConnection con = DataOperate.GetCon();
                 con.Open();
                 MySqlCommand com = new MySqlCommand(sql, con);
@@ -124,9 +127,9 @@ namespace RentServer.Controllers
             }
         }
         
-        // POST send
+        // POST user
         [HttpPost("send")]
-        public JsonResult Send(UserSendForm sendForm)
+        public JsonResult Send(AdminSendForm sendForm)
         {
             Regex r1 = new Regex("^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$");
             Regex r2 = new Regex("^\\w{6,18}$");
@@ -138,7 +141,7 @@ namespace RentServer.Controllers
             {
                 return Fail("密码只能包含字母、数字和下划线，长度在6~18之间", 1002);
             }
-            string sql = "select count(*) from user where email=@Email";
+            string sql = "select count(*) from admin where email=@Email";
             MySqlConnection con = DataOperate.GetCon();
             con.Open();
             MySqlCommand cmd = new MySqlCommand(sql, con);
@@ -180,89 +183,67 @@ namespace RentServer.Controllers
             client.Disconnect(true);
         }
         
-        // GET userList
-        [HttpGet("userList")]
-        public JsonResult UserList(string email)
+        // GET adminList
+        [HttpGet("adminList")]
+        public JsonResult AdminList(string email)
         {
-            string sql = "select * from user inner join usertype on user.type = usertype.id where email = '" + email + "'";
+            string sql = "select * from admin where email = '" + email + "'";
             return Success(DataOperate.FindAll(sql));
         }
-            
+        
         // GET selfDescTags
         [HttpGet("selfDescTags")]
         public JsonResult SelfDescTags(string email)
         {
-            string sql = "select * from user inner join selfdesc on user.email = selfdesc.email where user.email = '" + email + "'";
+            string sql = "select * from admin inner join selfdesc on admin.email = selfdesc.email where admin.email = '" + email + "'";
             return Success(DataOperate.FindAll(sql));
         }
         
         // Post perfectInfo
         [HttpPost("perfectInfo")]
-        public JsonResult PerfectInfo(CurrentUser currentUser)
+        public JsonResult PerfectInfo(CurrentAdmin currentAdmin)
         {
-            string sql = "update user set name='"+currentUser.Name+"', sex='"+currentUser.Sex+"', cardNum='"+currentUser.CardNum+"', phone='"+currentUser.Phone+"', native='"+currentUser.Native+"', avatar='"+currentUser.Avatar+"' where email= '"+currentUser.Email+"'";
+            string sql = "update admin set username='" + currentAdmin.Name + "', sex='" + currentAdmin.Sex +
+                         "', cardNum='" + currentAdmin.CardNum + "', phone='" + currentAdmin.Phone + "', native='" +
+                         currentAdmin.Native + "', major='" + currentAdmin.Major + "', avatar='" + currentAdmin.Avatar +
+                         "' where email= '" + currentAdmin.Email + "'";
             return Success(DataOperate.Update(sql));
         }
         
         // Post updateInfo
         [HttpPost("updateInfo")]
-        public JsonResult UpdateInfo(UpdateData updateData)
+        public JsonResult UpdateInfo(UpdateForm updateForm)
         {
             var sqls = new List<string>();
             
-            sqls.Add("update user set name='"+updateData.Name+"', sex='"+updateData.Sex+"', phone='"+updateData.Phone+"', native='"+updateData.Native+"', avatar='"+updateData.Avatar+"' where email= '"+updateData.Email+"'");
-            sqls.Add("delete from selfdesc where email='" + updateData.Email + "'");
+            sqls.Add("update admin set username='"+updateForm.Name+"', sex='"+updateForm.Sex+"', phone='"+updateForm.Phone+"', native='"+updateForm.Native+"', major='"+updateForm.Major+"', avatar='"+updateForm.Avatar+"' where email= '"+updateForm.Email+"'");
+            sqls.Add("delete from selfdesc where email='" + updateForm.Email + "'");
             
-            foreach (var updateDataSelfDescTag in updateData.SelfDescTags)
+            foreach (var updateDataSelfDescTag in updateForm.SelfDescTags)
             {
-                sqls.Add("insert into selfdesc (email,tag) values ('" + updateData.Email + "','" +
-                            updateDataSelfDescTag + "')");
+                sqls.Add("insert into selfdesc (email,tag) values ('" + updateForm.Email + "','" +
+                         updateDataSelfDescTag + "')");
             }
             return Success(DataOperate.ExecTransaction(sqls.ToArray()));
         }
         
-        // GET userList
-        [HttpGet("userList")]
-        public JsonResult GetUserList(int id, int pageNum, int pageSize)
+        // GET houseOfAdmin
+        [HttpGet("houseOfAdmin")]
+        public JsonResult houseOfAdmin(string email)
         {
-            int totalCount;
-            pageSize = pageSize == 0 ? 1 : pageSize;
-            pageNum = pageNum == 0 ? 1 : pageNum;
-            string sql = "";
-           
-            if (id == 0)
-            {
-                totalCount = DataOperate.Sele("select count(*) from user inner join usertype on user.type = usertype.id where usertype.id !=1");
-                sql = "select * from user inner join usertype on user.type = usertype.id where usertype.id !=1 limit "+ (pageNum-1)*pageSize + "," +pageSize;;
-            }
-            else
-            {
-                totalCount = DataOperate.Sele("select count(*) from user inner join usertype on user.type = usertype.id where usertype.id !=1 and user.id=" + id);
-                sql = "select * from user inner join usertype on user.type = usertype.id where usertype.id !=1 and user.id=" + id +" limit "+ (pageNum-1)*pageSize + "," +pageSize;
-            }
-            return Success(new {totalCount = totalCount, data = DataOperate.FindAll(sql)});
+            string sql =
+                "select * from house inner join ownercontract on house.id = ownercontract.houseId inner join admin on admin.id = ownercontract.adminId where admin.email='" +
+                email + "'";
+            return Success(DataOperate.FindAll(sql));
         }
         
-        // GET userList
-        [HttpGet("userList")]
-        public JsonResult GetTenantList(int id, int pageNum, int pageSize)
+        // Get contractOfAdmin
+        [HttpGet("contractOfAdmin")]
+        public JsonResult contractOfAdmin(string email)
         {
-            int totalCount;
-            pageSize = pageSize == 0 ? 1 : pageSize;
-            pageNum = pageNum == 0 ? 1 : pageNum;
-            string sql = "";
-           
-            if (id == 0)
-            {
-                totalCount = DataOperate.Sele("select count(*) from user inner join usertype on user.type = usertype.id where usertype.id !=1");
-                sql = "select * from user inner join usertype on user.type = usertype.id where usertype.id !=1 limit "+ (pageNum-1)*pageSize + "," +pageSize;;
-            }
-            else
-            {
-                totalCount = DataOperate.Sele("select count(*) from user inner join usertype on user.type = usertype.id where usertype.id !=1 and user.id=" + id);
-                sql = "select * from user inner join usertype on user.type = usertype.id where usertype.id !=1 and user.id=" + id +" limit "+ (pageNum-1)*pageSize + "," +pageSize;
-            }
-            return Success(new {totalCount = totalCount, data = DataOperate.FindAll(sql)});
+            string sql =
+                "select * from ownercontract inner join admin on admin.id = ownercontract.adminId union all select * from tenantcontract inner join admin on admin.id = tenantcontract.adminId where admin.email='"+email+"' order by startAt desc";
+            return Success(DataOperate.FindAll(sql));
         }
     }
 }
