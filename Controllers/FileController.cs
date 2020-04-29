@@ -28,7 +28,7 @@ namespace RentServer.Controllers
                 //得到的名字是文件在本地机器的绝对路径
                 var fileName = formFile.FileName.ToString();
 
-                string filePath = hostingEnv.WebRootPath + $@"\static\imgs\";
+                string filePath = hostingEnv.WebRootPath + $@""+Path.DirectorySeparatorChar+"static"+Path.DirectorySeparatorChar+"imgs" + Path.DirectorySeparatorChar;
 
                 if (!Directory.Exists(filePath))
                 {

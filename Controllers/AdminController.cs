@@ -88,6 +88,8 @@ namespace RentServer.Controllers
             MySqlDataReader sdr = cmd.ExecuteReader();
             if (sdr.Read())
             {
+                HttpContext.Session.SetString("adminEmail", loginForm.Email);
+                HttpContext.Session.SetString("adminId", sdr["id"].ToString());
                 return LoginSuccess("true");
             }
             return Fail("用户或密码输入有误，登录失败..",1006);
@@ -113,7 +115,6 @@ namespace RentServer.Controllers
                 com.Parameters["@Pwd"].Value = registerForm.Pwd;
                 if (com.ExecuteNonQuery() > 0)
                 {
-                    HttpContext.Session.SetString("email",registerForm.Email);
                     return Success("true");
                 }
                 else
@@ -185,9 +186,9 @@ namespace RentServer.Controllers
         
         // GET adminList
         [HttpGet("adminList")]
-        public JsonResult AdminList(string email)
+        public JsonResult AdminList()
         {
-            string sql = "select * from admin where email = '" + email + "'";
+            string sql = "select * from admin where id = '" + GetAdminId() + "'";
             return Success(DataOperate.FindAll(sql));
         }
         

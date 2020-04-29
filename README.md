@@ -224,5 +224,18 @@ create table tenantcontract
 )
 comment '租户合同' charset=utf8;
 
+create table tobeowner
+(
+    id        int auto_increment
+        primary key,
+    userId    int                                             not null,
+    city      varchar(32)                                     not null,
+    community varchar(32)                                     null,
+    createdAt timestamp             default CURRENT_TIMESTAMP not null,
+    status    enum ('done', 'todo') default 'todo'            not null,
+    updatedAt timestamp             default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
+)
+    comment '申请房主记录' charset = utf8;
+
 
 ```

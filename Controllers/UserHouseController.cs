@@ -23,14 +23,6 @@ namespace RentServer.Controllers
             Column = column;
         }
     }
-    
-    public class EntrustInfo
-    {
-        public string Name { get; set; }
-        public string Phone { get; set; }
-        public string City { get; set; }
-        public string Community { get; set; }
-    }
 
     [Route("[controller]")]
     [ApiController]
@@ -115,14 +107,6 @@ namespace RentServer.Controllers
         {
             string sql = "select community from house";
             return Success(DataOperate.FindAll(sql));
-        }
-        
-        // POST entrustHouse
-        [HttpPost("entrustHouse")]
-        public JsonResult EntrustHouse(EntrustInfo entrustInfo)
-        {
-            string sql = "insert into entrust (name, phone, city, community) values ('"+entrustInfo.Name+"','"+ entrustInfo.Phone+"','"+entrustInfo.City+"','"+entrustInfo.Community+"')";
-            return Success(DataOperate.Update(sql));
         }
     }
 }

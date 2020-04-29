@@ -25,7 +25,14 @@ namespace RentServer.Models
             MySqlConnection con = GetCon();         //创建数据库连接
             con.Open();         //打开数据库连接
             MySqlCommand cmd = new MySqlCommand(sql, con);        //创建SqlCommand对象
-            return cmd.ExecuteReader();        //返回
+            
+            MySqlDataReader sdr = cmd.ExecuteReader();
+            if (sdr.Read())
+            {
+                return sdr;
+            }
+
+            return sdr;        //返回
         }
 
         public static DataSet FindAll(string sql)
