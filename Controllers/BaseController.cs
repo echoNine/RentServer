@@ -25,7 +25,7 @@ namespace RentServer.Controllers
             var userId = HttpContext.Session.GetString("userId");
             if (userId == null)
             {
-                // todo exception
+                throw new RentServer.Exception.Frontend.NotLoginException();
             }
 
             return userId;
@@ -36,7 +36,7 @@ namespace RentServer.Controllers
             var userEmail = HttpContext.Session.GetString("userEmail");
             if (userEmail == null)
             {
-                // todo exception
+                throw new RentServer.Exception.Frontend.NotLoginException();
             }
 
             return userEmail;
@@ -47,7 +47,7 @@ namespace RentServer.Controllers
             var userId = HttpContext.Session.GetString("adminEmail");
             if (userId == null)
             {
-                // todo exception
+                throw new RentServer.Exception.Backend.NotLoginException();
             }
 
             return userId;
@@ -58,7 +58,7 @@ namespace RentServer.Controllers
             var userId = HttpContext.Session.GetString("adminId");
             if (userId == null)
             {
-                // todo exception
+                throw new RentServer.Exception.Backend.NotLoginException();
             }
 
             return userId;

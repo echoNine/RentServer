@@ -53,5 +53,40 @@ namespace RentServer.Controllers
 
             return Success(filePathList);
         }
+        
+        [HttpPost("upload/video")]
+        public JsonResult UploadVideo(List<IFormFile> files)
+        {
+            var filePathList = new List<string>();
+            foreach (var formFile in files)
+            {
+                //得到的名字是文件在本地机器的绝对路径
+                var fileName = formFile.FileName.ToString();
+
+                string filePath = hostingEnv.WebRootPath + $@""+Path.DirectorySeparatorChar+"static"+Path.DirectorySeparatorChar+"videos" + Path.DirectorySeparatorChar;
+
+                if (!Directory.Exists(filePath))
+                {
+                    Directory.CreateDirectory(filePath);
+                }
+
+                fileName = Guid.NewGuid() + "." + fileName.Split('.')[1];
+
+                string fileFullName = filePath + fileName;
+
+                if (formFile.Length > 0)
+                {
+                    //根据路径创建文件
+                    using (var fs = new FileStream(fileFullName, FileMode.Create))
+                    {
+                        formFile.CopyTo(fs);
+                        fs.Flush();
+                    }
+                }
+                filePathList.Add("src/videos/" + fileName);
+            }
+
+            return Success(filePathList);
+        }
     }
 }

@@ -6,8 +6,8 @@
 
     <ItemGroup>
         <Folder Include="wwwroot\" />
-        <Folder Include="wwwroot\static" />
         <Folder Include="wwwroot\static\imgs" />
+        <Folder Include="wwwroot\static\videos" />
     </ItemGroup>
 
     <ItemGroup>
