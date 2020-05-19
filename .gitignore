@@ -2,3 +2,6 @@
 .idea/*
 bin/*
 obj/*
+wwwroot/static/*
+appsettings.Development.json
+appsettings.Production.json
