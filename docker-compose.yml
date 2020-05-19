@@ -7,4 +7,19 @@ services:
     container_name: rent-server
     ports:
     - 8890:80
-    
+    networks:
+      - web
+  mysql-57:
+    image: "mysql:5.7"
+    restart: always
+    container_name: mysql-57
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+    volumes:
+      - ./mysql57:/var/lib/mysql
+    networks:
+      - web
+networks:
+  web:
