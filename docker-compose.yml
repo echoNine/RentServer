@@ -1,6 +1,6 @@
 version: "2"
 services:
-  RentServer: 
+  rent-server: 
     build:
       context: .
       dockerfile: Dockerfile

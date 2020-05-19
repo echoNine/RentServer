@@ -59,7 +59,6 @@ namespace RentServer
 
             app.UseSession();
             app.UseCors("default");
-            app.UseHttpsRedirection();
             
             app.UseExceptionHandler(new ExceptionHandlerOptions 
             {
