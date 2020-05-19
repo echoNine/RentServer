@@ -14,7 +14,7 @@ namespace RentServer.Controllers.Backend
             pageSize = pageSize == 0 ? 1 : pageSize;
             pageNum = pageNum == 0 ? 1 : pageNum;
 
-            var totalCount = DataOperate.Sele("select * from transactions where tranType = '" + tranType + "'");
+            var totalCount = DataOperate.Sele("select count(*) from transactions where tranType = '" + tranType + "'");
 
             DataSet ds = DataOperate.FindAll("select count(contractId) as rowCount from transactions where tranType = '" + tranType + "' group by contractId");
             string[] countArray = new string[ds.Tables[0].Rows.Count]; //把DataSet中的数据转换为一维数组
@@ -23,10 +23,10 @@ namespace RentServer.Controllers.Backend
                 countArray[row] = ds.Tables[0].Rows[row]["rowCount"].ToString();
             }
 
-            var rentInSql = "select * from transactions where tranType = '" + tranType + "' order by id asc limit " + (pageNum - 1) * pageSize +
+            var sql = "select * from transactions where tranType = '" + tranType + "' order by id desc limit " + (pageNum - 1) * pageSize +
                             "," + pageSize;
 
-            return Success(new {totalCount = totalCount, countArray = countArray, data = DataOperate.FindAll(rentInSql)});
+            return Success(new {totalCount = totalCount, countArray = countArray, data = DataOperate.FindAll(sql)});
         }
 
         [HttpPost("changePayStatus")]

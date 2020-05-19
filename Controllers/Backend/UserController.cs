@@ -20,13 +20,13 @@ namespace RentServer.Controllers.Backend
             if (id == 0)
             {
                 totalCount = DataOperate.Sele("select count(*) from user where type = '" + type + "'");
-                sql = "select * from user where type = '" + type + "' limit " + (pageNum - 1) * pageSize + "," +
+                sql = "select * from user where type = '" + type + "' order by id desc limit " + (pageNum - 1) * pageSize + "," +
                       pageSize;
             }
             else
             {
                 totalCount = DataOperate.Sele("select count(*) from user where type ='" + type + "' and id=" + id);
-                sql = "select * from user where type = '" + type + "' and id=" + id + " limit " +
+                sql = "select * from user where type = '" + type + "' and id=" + id + " order by id desc limit " +
                       (pageNum - 1) * pageSize + "," + pageSize;
             }
 
@@ -131,7 +131,7 @@ namespace RentServer.Controllers.Backend
 
             totalCount = DataOperate.Sele("select count(*) from applyTobeowner");
 
-            string sql = "select * from applyTobeowner limit " + (pageNum - 1) * pageSize + "," + pageSize;
+            string sql = "select * from applyTobeowner order by id desc limit " + (pageNum - 1) * pageSize + "," + pageSize;
 
             return Success(new {totalCount = totalCount, data = DataOperate.FindAll(sql)});
         }

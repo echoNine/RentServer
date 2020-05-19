@@ -193,9 +193,11 @@ namespace RentServer.Controllers.Frontend
             try
             {
                 cmd.ExecuteNonQuery();
+                con.Close();
             }
             catch (System.Exception e)
             {
+                con.Close();
                 return Success(false);
             }
 
@@ -233,7 +235,7 @@ namespace RentServer.Controllers.Frontend
         public JsonResult GetOrderList()
         {
             string sql =
-                "select * from houseOrdered inner join contract on houseOrdered.houseId = contract.houseId inner join admin on admin.id = contract.adminId where type='withOwner' and houseOrdered.userId=" +
+                "select * from houseOrdered inner join house on houseOrdered.houseId = house.id inner join contract on houseOrdered.houseId = contract.houseId inner join admin on admin.id = contract.adminId where contract.type='withOwner' and houseOrdered.userId=" +
                 GetUserId();
             return Success(DataOperate.FindAll(sql));
         }

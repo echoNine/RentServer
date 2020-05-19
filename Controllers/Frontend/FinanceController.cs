@@ -31,7 +31,7 @@ namespace RentServer.Controllers.Frontend
             }
             var totalCount = DataOperate.Sele(countSql);
 
-            sql = sql + " order by id asc limit " + (pageNum - 1) * pageSize + "," + pageSize;
+            sql = sql + " order by id desc limit " + (pageNum - 1) * pageSize + "," + pageSize;
             return Success(new {totalCount = totalCount, data = DataOperate.FindAll(sql)});
         }
 

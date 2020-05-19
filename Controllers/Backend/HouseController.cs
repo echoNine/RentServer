@@ -53,7 +53,7 @@ namespace RentServer.Controllers.Backend
         [HttpPost("getHouseListToTable")]
         public JsonResult GetHouseListToTable(GetHouseListToTable getHouseListToTable)
         {
-            var selSql1 = "select * from house";
+            var selSql1 = "select * from house ";
             DataSet allHouse = DataOperate.FindAll(selSql1);
             
             
@@ -81,7 +81,7 @@ namespace RentServer.Controllers.Backend
                 sql += " where rentStatus in ('" + string.Join("','", getHouseListToTable.Status) + "')";
             }
             
-            sql += " limit " + (getHouseListToTable.PageNum - 1) * getHouseListToTable.PageSize + "," + getHouseListToTable.PageSize;
+            sql += " order by id desc limit " + (getHouseListToTable.PageNum - 1) * getHouseListToTable.PageSize + "," + getHouseListToTable.PageSize;
             
             return Success(new {totalCount = DataOperate.Sele(countSql), data = DataOperate.FindAll(sql)});
         }
@@ -187,10 +187,12 @@ namespace RentServer.Controllers.Backend
                 updateHouseCmd.ExecuteNonQuery();
 
                 mySqlTransaction.Commit(); 
+                con.Close();
             }
             catch (System.Exception e)
             {
                 mySqlTransaction.Rollback(); 
+                con.Close();
                 return Success(false);
             }
 
@@ -255,13 +257,13 @@ namespace RentServer.Controllers.Backend
                 }
                 countSql = countSql.TrimEnd('a', 'n', 'd', ' ') + " limit " + (pageNum - 1) * pageSize + "," +
                       pageSize;
-                sql = sql.TrimEnd('a', 'n', 'd', ' ') + " limit " + (pageNum - 1) * pageSize + "," +
+                sql = sql.TrimEnd('a', 'n', 'd', ' ') + " order by id desc limit " + (pageNum - 1) * pageSize + "," +
                       pageSize;
             }
             else
             {
                 countSql = "select count(*) from house where rentStatus in ('activated', 'empty', 'rented')";
-                sql = "select * from house where rentStatus in ('activated', 'empty', 'rented') limit " + (pageNum - 1) * pageSize + "," + pageSize;
+                sql = "select * from house where rentStatus in ('activated', 'empty', 'rented') order by id desc limit " + (pageNum - 1) * pageSize + "," + pageSize;
             }
 
             return Success(new {totalCount =  DataOperate.Sele(countSql), data = DataOperate.FindAll(sql)});
@@ -295,7 +297,7 @@ namespace RentServer.Controllers.Backend
         [HttpGet("getEmptyHouseList")]
         public JsonResult GetEmptyHouseList()
         {
-            string sql = "select * from house where rentStatus='empty'";
+            var sql = "select * from house where rentStatus='empty'";
             return Success(DataOperate.FindAll(sql));
         }
         
@@ -311,7 +313,7 @@ namespace RentServer.Controllers.Backend
         [HttpGet("getOrderList")]
         public JsonResult GetOrderList()
         {
-            string sql = "select * from houseOrdered";
+            var sql = "select * from houseOrdered inner join house on house.id = houseOrdered.houseId order by houseOrdered.id desc";
             return Success(DataOperate.FindAll(sql));
         }
         

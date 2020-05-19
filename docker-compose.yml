@@ -1,0 +1,10 @@
+version: "2"
+services:
+  RentServer: 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rent-server
+    ports:
+    - 8890:80
+    

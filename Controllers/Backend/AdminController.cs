@@ -41,10 +41,12 @@ namespace RentServer.Controllers.Backend
                 com.Parameters["@Pwd"].Value = registerForm.Pwd;
                 if (com.ExecuteNonQuery() > 0)
                 {
+                    con.Close();
                     return Success("true");
                 }
                 else
                 {
+                    con.Close();
                     return Fail("注册失败，请重试..", 1004);
                 }
             }
@@ -86,6 +88,8 @@ namespace RentServer.Controllers.Backend
                 string strFromPass = SmtpSettings.Password;
                 SendEmail(strSmtpServer, strFrom, strFromPass, to, "激活邮箱", content);
                 HttpContext.Session.SetInt32("code", code);
+                con.Close();
+
                 return Success("true");
             }
 
@@ -117,7 +121,8 @@ namespace RentServer.Controllers.Backend
         public JsonResult Login(AdminLoginForm loginForm)
         {
             string sql = "select * from admin where email=@Email and pwd=@Pwd";
-            var cmd = new MySqlCommand(sql, DataOperate.GetCon());
+            var mySqlConnection = DataOperate.GetCon();
+            var cmd = new MySqlCommand(sql, mySqlConnection);
             cmd.Parameters.Add(new MySqlParameter("Email", MySqlDbType.VarChar, 16));
             cmd.Parameters["Email"].Value = loginForm.Email;
             cmd.Parameters.Add(new MySqlParameter("Pwd", MySqlDbType.VarChar, 32));
@@ -128,6 +133,8 @@ namespace RentServer.Controllers.Backend
             
             HttpContext.Session.SetString("adminEmail", loginForm.Email);
             HttpContext.Session.SetString("adminId", admin["id"].ToString());
+
+            mySqlConnection.Close();
             return LoginSuccess("true");
 
         }

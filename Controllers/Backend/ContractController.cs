@@ -16,7 +16,7 @@ namespace RentServer.Controllers.Backend
         [HttpGet("getContractListOfAdmin")]
         public JsonResult GetContractListOfAdmin()
         {
-            string sql = "select * from contract inner join admin on admin.id = contract.adminId where admin.id=" +
+            string sql = "select * from contract inner join house on house.id = contract.houseId inner join admin on admin.id = contract.adminId where admin.id=" +
                          GetAdminId() + " order by startAt desc";
             return Success(DataOperate.FindAll(sql));
         }
@@ -88,26 +88,57 @@ namespace RentServer.Controllers.Backend
             DataSet allContract = DataOperate.FindAll(sql);
 
             // 检查合同状态并修改
+            MySqlConnection con = DataOperate.GetCon(); //创建数据库连接
+            MySqlTransaction sTransaction = null; //创建SqlTransaction对象
+            sTransaction = con.BeginTransaction(); //设置开始事务
             foreach (DataRow row in allContract.Tables[0].Rows)
             {
                 var expired = (DateTime.Parse(row["endAt"].ToString()) <
                                DateTime.Parse(DateTime.Now.ToString()));
                 var contractStatus = expired ? "fallDue" : "undue";
-                string[] sqlT = new string[2];
-                int i = 0;
-                sqlT[0] = "update contract set contractStatus='" + contractStatus + "' where id=" +
-                             row["id"].ToString();
+                var updateContractStatus = "update contract set contractStatus='" + contractStatus + "' where id=" +
+                                       row["id"].ToString();
+
+                var contractCheckSql = "select * from contract where houseId = " + row["houseId"].ToString() + " and contractStatus = 'undue' and type='withTenant'";
+                var updateHouse = "update house set rentStatus='empty' where id=" + row["houseId"].ToString();
                 
-                sqlT[1] = "update house set rentStatus='empty' where id=" + row["houseId"].ToString();
-                if (expired)
+                try
                 {
-                    DataOperate.ExecTransaction(sqlT);
+                    using (MySqlCommand com = con.CreateCommand())
+                    {
+                        com.Transaction = sTransaction; //设置需要执行事务
+                        com.CommandText = updateContractStatus;
+                        
+                        if (com.ExecuteNonQuery() == -1) //判断是否执行成功
+                        {
+                            sTransaction.Rollback(); //设置事务回滚
+                            con.Close();
+                            return Fail(false, 10000); //返回布尔值False
+                        }
+                        
+                        com.CommandText = contractCheckSql;
+                        if (Convert.ToInt32(com.ExecuteScalar()) <= 0)
+                        {
+                            com.CommandText = updateHouse;
+                            if (com.ExecuteNonQuery() == -1) //判断是否执行成功
+                            {
+                                sTransaction.Rollback(); //设置事务回滚
+                                con.Close();
+                                return Fail(false, 10000); //返回布尔值False
+                            }
+                        }
+                    }
                 }
-                else
+                catch (System.Exception ex)
                 {
-                    DataOperate.Update(sqlT[0]);
+                    sTransaction.Rollback(); //设置事务回滚
+                    con.Close();
+                    return Fail(false, 10000); //返回布尔值False
                 }
             }
+            
+            sTransaction.Commit(); //提交事务
+            con.Close();
 
             var sqlParent = "select * from contract where type = 'withTenant' and parentNum is null and contractStatus != 'invalid'";
             var sqlChildren = "select * from contract where type = 'withTenant' and parentNum is not null and contractStatus != 'invalid'";
@@ -290,9 +321,12 @@ namespace RentServer.Controllers.Backend
                 {
                     mySqlCommand.ExecuteNonQuery();
                 }
-
-                var upCmd = new MySqlCommand(upSql, con) {Transaction = sTransaction};
-                upCmd.ExecuteNonQuery();
+                var upApplySql = "update renewalContractApply set applyStatus = 'finished' where type='withTenant' and houseId=" +
+                                 createTenantContract.HouseId + " and userId=" + createTenantContract.UserId;
+                var upCmd1 = new MySqlCommand(upSql, con) {Transaction = sTransaction};
+                var upCmd2 = new MySqlCommand(upApplySql, con) {Transaction = sTransaction};
+                upCmd1.ExecuteNonQuery();
+                upCmd2.ExecuteNonQuery();
                 sTransaction.Commit();
             }
             catch (System.Exception e)
@@ -434,8 +468,12 @@ namespace RentServer.Controllers.Backend
                     mySqlCommand.ExecuteNonQuery();
                 }
 
-                var upCmd = new MySqlCommand(upSql, con) {Transaction = sTransaction};
-                upCmd.ExecuteNonQuery();
+                var upApplySql = "update renewalContractApply set applyStatus = 'finished' where type='withOwner' and houseId=" +
+                                 createHouseContract.HouseId + " and userId=" + createHouseContract.UserId;
+                var upCmd1 = new MySqlCommand(upSql, con) {Transaction = sTransaction};
+                var upCmd2 = new MySqlCommand(upApplySql, con) {Transaction = sTransaction};
+                upCmd1.ExecuteNonQuery();
+                upCmd2.ExecuteNonQuery();
                 sTransaction.Commit();
             }
             catch (System.Exception e)
@@ -496,7 +534,7 @@ namespace RentServer.Controllers.Backend
         {
             var sql =
                 "select * from renewalContractApply inner join house on renewalContractApply.houseId = house.id where type='" +
-                type + "'";
+                type + "' order by renewalContractApply.id desc";
             return Success(DataOperate.FindAll(sql));
         }
 

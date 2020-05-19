@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using RentServer.Models;
 
@@ -11,7 +12,7 @@ namespace RentServer.Controllers.Frontend
         [HttpGet("getContractList")]
         public JsonResult GetContractList(string type)
         {
-            var sql = "select * from contract where contractStatus != 'invalid' and type='" + type + "' and userId=" + GetUserId();
+            var sql = "select * from contract inner join house on contract.houseId = house.id where type='" + type + "' and contract.userId=" + GetUserId();
             return Success(DataOperate.FindAll(sql));
         }
         

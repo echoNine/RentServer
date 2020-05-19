@@ -17,6 +17,8 @@ namespace RentServer
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            
+            new AppSetting().Initial(configuration);
         }
 
         public IConfiguration Configuration { get; }

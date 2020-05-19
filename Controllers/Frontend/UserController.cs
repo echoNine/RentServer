@@ -41,10 +41,12 @@ namespace RentServer.Controllers.Frontend
                 if (com.ExecuteNonQuery() > 0)
                 {
                     // HttpContext.Session.SetString("email",registerForm.Email);
+                    con.Close();
                     return Success("true");
                 }
                 else
                 {
+                    con.Close();
                     return Fail("注册失败，请重试..", 1004);
                 }
             }
@@ -86,9 +88,11 @@ namespace RentServer.Controllers.Frontend
                 string strFromPass = SmtpSettings.Password;
                 SendEmail(strSmtpServer, strFrom, strFromPass, to, "激活邮箱", content);
                 HttpContext.Session.SetInt32("code", code);
+                con.Close();
+
                 return Success("true");
             }
-
+            con.Close();
             return Fail("该用户已存在，请选择新账号注册..", 1003);
         }
 
@@ -117,19 +121,25 @@ namespace RentServer.Controllers.Frontend
         public JsonResult Login(UserLoginForm loginForm)
         {
             var sql = "select * from user where email=@Email and pwd=@Pwd";
-            
-            var cmd = new MySqlCommand(sql, DataOperate.GetCon());
+
+            var mySqlConnection = DataOperate.GetCon();
+            var cmd = new MySqlCommand(sql, mySqlConnection);
             cmd.Parameters.Add(new MySqlParameter("Email", MySqlDbType.VarChar, 16));
             cmd.Parameters["Email"].Value = loginForm.Email;
             cmd.Parameters.Add(new MySqlParameter("Pwd", MySqlDbType.VarChar, 32));
             cmd.Parameters["Pwd"].Value = loginForm.Pwd;
             
             var user = DataOperate.FindOne(cmd);
-            if (user == null) return Fail("用户或密码输入有误，登录失败..", 1006);
+            if (user == null)
+            {
+                mySqlConnection.Close();
+                return Fail("用户或密码输入有误，登录失败..", 1006);
+            }
             
             HttpContext.Session.SetString("userEmail", loginForm.Email);
             HttpContext.Session.SetString("userId", user["id"].ToString());
-
+            
+            mySqlConnection.Close();
             return Success(user);
 
         }
