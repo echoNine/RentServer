@@ -31,7 +31,7 @@ namespace RentServer
                 // this defines a CORS policy called "default"
                 options.AddPolicy("default", policy =>
                 {
-                    policy.WithOrigins("http://localhost:8081")
+                    policy.WithOrigins(AppSetting.Cors.Origins)
                         .AllowAnyHeader()
                         .AllowCredentials()
                         .AllowAnyMethod();
