@@ -7,6 +7,8 @@ services:
     container_name: rent-server
     ports:
     - 8890:80
+    volumes:
+    - ./rent-server:/app/wwwroot
     networks:
       - web
   mysql-57:
